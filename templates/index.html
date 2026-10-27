@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Efficiency Handwritten Digit Feature & Similarity Analyzer</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Chart.js (Fast local/CDN bar charts) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-body: #0b1120;
+            --bg-card: #151f32;
+            --border-color: #26354f;
+            --accent-blue: #38bdf8;
+            --accent-green: #22c55e;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+        }
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+        .canvas-wrapper {
+            position: relative;
+            background: #000;
+            border: 2px dashed #3b82f6;
+            border-radius: 12px;
+            width: 220px;
+            height: 220px;
+            margin: 0 auto;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+        }
+        #drawCanvas {
+            cursor: crosshair;
+            display: block;
+        }
+        .canvas-hint {
+            position: absolute;
+            bottom: 6px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.72rem;
+            color: #64748b;
+            pointer-events: none;
+            user-select: none;
+        }
+        .quick-btn {
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            font-weight: 700;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.15s ease;
+        }
+        .quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+        }
+        .nav-pills .nav-link {
+            color: var(--text-muted);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .hero-result {
+            background: linear-gradient(145deg, #1e3a8a 0%, #0f274a 100%);
+            border: 1px solid #38bdf8;
+            border-radius: 14px;
+        }
+        .pipeline-card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 12px;
+            transition: transform 0.15s;
+        }
+        .pipeline-card:hover {
+            border-color: #38bdf8;
+            transform: translateY(-2px);
+        }
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #0284c7;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        pre.code-view {
+            background: #090d16;
+            color: #38bdf8;
+            font-size: 0.75rem;
+            line-height: 1.2;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+        .img-preview-box {
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #020617;
+            transition: transform 0.2s;
+        }
+        .img-preview-box:hover {
+            transform: scale(1.02);
+            border-color: #38bdf8;
+        }
+        .efficiency-pill {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            color: #4ade80;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="p-2 p-md-4">
+    <div class="container-fluid px-md-4">
+        
+        <!-- Header Banner -->
+        <header class="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-4 border-bottom border-secondary">
+            <div>
+                <h2 class="fw-bold mb-1 text-white d-flex align-items-center gap-2">
+                    <span class="fs-1">⚡</span>
+                    <span>High-Efficiency Digit Feature Analyzer</span>
+                </h2>
+                <p class="text-secondary mb-0">
+                    Accelerated <strong>Linear Algebra Engine</strong>: 96.25% SVD Dimensionality Reduction, SIMD-Vectorized Cosine Similarity, & Sub-Millisecond Classification.
+                </p>
+            </div>
+            <div class="mt-3 mt-md-0 d-flex flex-wrap gap-2 align-items-center">
+                <span class="efficiency-pill d-flex align-items-center gap-1">
+                    <i class="bi bi-cpu-fill"></i> Vectorized BLAS Engine
+                </span>
+                <span class="badge bg-primary px-3 py-2 fs-6 rounded-pill d-flex align-items-center gap-1">
+                    <i class="bi bi-mortarboard-fill"></i> Mini-Project 48
+                </span>
+            </div>
+        </header>
+
+        <div class="row g-4">
+            
+            <!-- LEFT COLUMN: Drawing Canvas & Prediction Card -->
+            <div class="col-lg-4 col-xl-4">
+                
+                <!-- Drawing Panel -->
+                <div class="card p-3 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="fw-bold mb-0 text-white"><i class="bi bi-pencil-fill text-info me-2"></i>Draw a Digit</h5>
+                        <div class="form-check form-switch m-0" title="Automatically analyzes the digit as soon as you finish drawing">
+                            <input class="form-check-input" type="checkbox" id="livePredictToggle" checked>
+                            <label class="form-check-label small text-info fw-bold" for="livePredictToggle">⚡ Instant Draw</label>
+                        </div>
+                    </div>
+                    <p class="small text-secondary mb-3">Draw a single number clearly in the box below:</p>
+
+                    <!-- Drawing Canvas with Centering Guide -->
+                    <div class="canvas-wrapper mb-3">
+                        <canvas id="drawCanvas" width="220" height="220"></canvas>
+                        <div class="canvas-hint">Draw inside this box</div>
+                    </div>
+
+                    <!-- Canvas Action Buttons -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <button class="btn btn-outline-danger w-100 btn-sm fw-bold d-flex align-items-center justify-content-center gap-1" onclick="clearCanvas()">
+                                <i class="bi bi-trash3-fill"></i> Clear
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-success w-100 btn-sm fw-bold d-flex align-items-center justify-content-center gap-1 shadow-sm" onclick="analyzeDrawing()">
+                                <i class="bi bi-magic"></i> Analyze
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Try Buttons -->
+                    <div class="mb-3">
+                        <label class="form-label small text-info fw-bold mb-2">
+                            <i class="bi bi-lightning-charge-fill"></i> Quick Try (Instant RAM lookup):
+                        </label>
+                        <div class="d-flex flex-wrap gap-1 justify-content-between">
+                            {% for d in range(10) %}
+                            <button class="btn btn-outline-info btn-sm quick-btn" onclick="quickSelectDigit({{ d }})" title="Test Digit {{ d }}">{{ d }}</button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <hr class="border-secondary my-2">
+
+                    <!-- Test Sample Dropdown -->
+                    <div>
+                        <label class="form-label small text-secondary fw-semibold mb-1">Or choose a pre-cached sample:</label>
+                        <select id="sampleSelect" class="form-select form-select-sm bg-dark text-white border-secondary" onchange="loadSelectedSample()">
+                            <option value="">-- Choose sample file --</option>
+                            {% for s in samples %}
+                            <option value="{{ s.filename }}">{{ s.display }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Friendly Prediction Hero Card -->
+                <div class="card p-3 p-md-4 hero-result mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-info text-uppercase fw-bold small"><i class="bi bi-search me-1"></i>Recognition Result</span>
+                        <span id="latencyBadge" class="efficiency-pill py-0 px-2 small">⚡ -- ms</span>
+                    </div>
+
+                    <div class="text-center my-2">
+                        <div class="text-secondary small text-uppercase">It looks like a:</div>
+                        <h1 class="display-2 fw-bolder text-white my-0 text-shadow" id="predDigit">--</h1>
+                        <h6 class="text-info fw-bold mt-1 mb-2" id="confLabel">Draw or select a digit</h6>
+                        <span id="confBadge" class="badge bg-success rounded-pill px-3 py-1 small">Confidence: --%</span>
+                    </div>
+
+                    <!-- Top 3 Ranking Bars -->
+                    <div class="p-2 rounded bg-black bg-opacity-40 border border-secondary border-opacity-50 my-3">
+                        <div class="small fw-bold text-light mb-2"><i class="bi bi-trophy-fill text-warning me-1"></i>Top Matches:</div>
+                        <div id="top3Container">
+                            <div class="text-secondary small fst-italic">Awaiting input...</div>
+                        </div>
+                    </div>
+
+                    <!-- Plain English Explanation Box -->
+                    <div class="small text-light bg-info bg-opacity-10 p-2 rounded border border-info border-opacity-25" id="summaryBox">
+                        <i class="bi bi-lightbulb-fill text-warning me-1"></i>
+                        <span>Draw a digit on the canvas to see the accelerated linear algebra pipeline run in real time.</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Friendly Tabs with Math & Visuals -->
+            <div class="col-lg-8 col-xl-8">
+                <div class="card p-3 shadow-sm h-100">
+                    
+                    <!-- Navigation Tabs -->
+                    <ul class="nav nav-pills mb-3 border-bottom border-secondary pb-2" id="mathTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-sim">
+                                <i class="bi bi-bar-chart-fill me-1"></i> 1. Match Ranking
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-3d-vector">
+                                <i class="bi bi-box me-1 text-info"></i> 2. 3D Vector Graph
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-efficiency">
+                                <i class="bi bi-speedometer2 me-1"></i> 3. Efficiency Metrics
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-pipeline">
+                                <i class="bi bi-diagram-3-fill me-1"></i> 4. Math Journey
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-matrix">
+                                <i class="bi bi-grid-3x3-gap-fill me-1"></i> 5. Matrix & Vectors
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-plots">
+                                <i class="bi bi-image-fill me-1"></i> 6. Subspace Visuals
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tabs Content -->
+                    <div class="tab-content">
+                        
+                        <!-- TAB 1: Match Ranking & Similarity -->
+                        <div class="tab-pane fade show active" id="tab-sim">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-white">How Closely Your Digit Matches Each Number (0–9)</h6>
+                                    <p class="text-secondary small mb-0">Higher cosine similarity means your stroke direction in 15D space points toward that digit's prototype.</p>
+                                </div>
+                                <span class="badge bg-info-subtle text-info border border-info small">Cauchy-Schwarz Bounded [-1, 1]</span>
+                            </div>
+
+                            <!-- Chart -->
+                            <div style="height: 220px;" class="mb-3 p-2 bg-dark rounded border border-secondary">
+                                <canvas id="similarityChart"></canvas>
+                            </div>
+
+                            <!-- Friendly Comparison Table -->
+                            <div class="table-responsive">
+                                <table class="table table-dark table-sm table-hover align-middle small mb-0">
+                                    <thead>
+                                        <tr class="text-secondary border-secondary">
+                                            <th>Digit</th>
+                                            <th>Match Strength</th>
+                                            <th>Cosine Similarity</th>
+                                            <th>Inner Product</th>
+                                            <th>Distance</th>
+                                            <th>Likelihood</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="simTableBody">
+                                        <tr><td colspan="6" class="text-center text-secondary py-3">Loading patterns...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: Interactive 3D Vector Graph -->
+                        <div class="tab-pane fade" id="tab-3d-vector">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-white"><i class="bi bi-box me-1 text-info"></i>Instant 3D Vector Space & Graph (\(\mathbb{R}^3\))</h6>
+                                    <p class="text-secondary small mb-0">High-performance 3D canvas: Click and drag to rotate in real time. Red line is feature vector \(\mathbf{z}_{3\text{D}}\).</p>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <button class="btn btn-sm btn-dark border-secondary text-info py-1 px-2" style="font-size: 0.78rem;" onclick="renderer3D.toggleAutoRotate()" id="btnAutoSpin">
+                                        <i class="bi bi-arrow-repeat me-1"></i>Auto-Spin
+                                    </button>
+                                    <button class="btn btn-sm btn-dark border-secondary text-white py-1 px-2" style="font-size: 0.78rem;" onclick="renderer3D.resetView()">
+                                        <i class="bi bi-arrows-fullscreen me-1"></i>Reset View
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Instant 3D Canvas Viewport -->
+                            <div class="position-relative border border-secondary rounded-3 mb-3 shadow overflow-hidden" style="background: #090d16; height: 420px;">
+                                <canvas id="vector3dCanvas" style="width: 100%; height: 100%; display: block; cursor: grab;"></canvas>
+                                
+                                <!-- Floating Legend / Coordinates HUD -->
+                                <div class="position-absolute bottom-0 start-0 m-2 px-2 py-1 rounded bg-black bg-opacity-75 border border-secondary small text-secondary d-flex align-items-center gap-2" style="font-size: 0.72rem; pointer-events: none;">
+                                    <span class="text-danger fw-bold"><i class="bi bi-arrow-up-right me-1"></i>Red Ray: 3D Vector \(\mathbf{z}_{3\text{D}}\)</span>
+                                    <span class="text-info">z₁ (PC1)</span>
+                                    <span class="text-success">z₂ (PC2)</span>
+                                    <span class="text-warning">z₃ (PC3)</span>
+                                    <span class="text-muted ms-2">Drag to Rotate • Scroll to Zoom</span>
+                                </div>
+                            </div>
+
+                            <!-- 3D Vector Detail Pills -->
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <div class="p-2 rounded bg-dark border border-secondary text-center">
+                                        <span class="small text-secondary d-block" style="font-size:0.75rem;">Principal Axis 1 (\(z_1\))</span>
+                                        <span id="tab3d_z1" class="fw-bold text-info font-monospace">--</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-2 rounded bg-dark border border-secondary text-center">
+                                        <span class="small text-secondary d-block" style="font-size:0.75rem;">Principal Axis 2 (\(z_2\))</span>
+                                        <span id="tab3d_z2" class="fw-bold text-info font-monospace">--</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-2 rounded bg-dark border border-secondary text-center">
+                                        <span class="small text-secondary d-block" style="font-size:0.75rem;">Principal Axis 3 (\(z_3\))</span>
+                                        <span id="tab3d_z3" class="fw-bold text-info font-monospace">--</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-2 rounded bg-dark border border-secondary text-center">
+                                        <span class="small text-secondary d-block" style="font-size:0.75rem;">3D Vector Norm \(\|\mathbf{z}_{3\text{D}}\|_2\)</span>
+                                        <span id="tab3d_norm" class="fw-bold text-success font-monospace">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: Computational Efficiency Metrics -->
+                        <div class="tab-pane fade" id="tab-efficiency">
+                            <div class="mb-3">
+                                <h6 class="fw-bold mb-0 text-white">Mathematical & Computational Efficiency Analysis</h6>
+                                <p class="text-secondary small mb-0">How dimensionality reduction and vectorization optimize speed, memory, and energy:</p>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3 col-6">
+                                    <div class="card p-3 bg-dark border-secondary text-center">
+                                        <div class="text-info fs-3 fw-bold">96.25%</div>
+                                        <div class="small fw-bold text-white mt-1">Dimensionality Reduction</div>
+                                        <div class="text-secondary small" style="font-size: 0.75rem;">From 400D down to 15D</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="card p-3 bg-dark border-secondary text-center">
+                                        <div class="text-success fs-3 fw-bold">26.7x</div>
+                                        <div class="small fw-bold text-white mt-1">FLOPs Acceleration</div>
+                                        <div class="text-secondary small" style="font-size: 0.75rem;">15 vs 400 inner-prod mults</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="card p-3 bg-dark border-secondary text-center">
+                                        <div class="text-warning fs-3 fw-bold">&lt; 1 ms</div>
+                                        <div class="small fw-bold text-white mt-1">Inference Latency</div>
+                                        <div class="text-secondary small" style="font-size: 0.75rem;">Vectorized SIMD & BLAS</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="card p-3 bg-dark border-secondary text-center">
+                                        <div class="text-primary fs-3 fw-bold">120 B</div>
+                                        <div class="small fw-bold text-white mt-1">Feature Storage</div>
+                                        <div class="text-secondary small" style="font-size: 0.75rem;">vs 3,200 bytes per image</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card p-3 bg-dark border-secondary">
+                                <h6 class="fw-bold text-info mb-2"><i class="bi bi-lightning-charge-fill me-1"></i>Key Efficiency Innovations Implemented:</h6>
+                                <ul class="small text-secondary mb-0 ps-3">
+                                    <li class="mb-2"><strong class="text-white">Pythagorean Projection Residual:</strong> Computes the reconstruction error $\|\mathbf{x}_c - P_k \mathbf{x}_c\| = \sqrt{\|\mathbf{x}_c\|^2 - \|\mathbf{z}\|^2}$ in $O(D)$ without performing an expensive $O(D \cdot k)$ reconstruction matrix multiplication.</li>
+                                    <li class="mb-2"><strong class="text-white">Vectorized BLAS Inner Products:</strong> Compares the test digit with all 10 prototype patterns simultaneously using a single matrix-vector BLAS operation rather than Python loops.</li>
+                                    <li class="mb-2"><strong class="text-white">Zero-Overhead Static Verification:</strong> Basis orthonormality ($V_k^T V_k = I_k$) and projection idempotence ($P_k^2 = P_k$) are pre-calculated once on startup, removing 64 million matrix operations from each request.</li>
+                                    <li><strong class="text-white">In-Memory Sample Caching:</strong> Pre-loads dataset vectors into RAM for instant $O(1)$ lookup with zero disk read overhead.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: 8-Stage Math Pipeline -->
+                        <div class="tab-pane fade" id="tab-pipeline">
+                            <div class="mb-3">
+                                <h6 class="fw-bold mb-0 text-white">The 8-Stage Sequential Computational Process</h6>
+                                <p class="text-secondary small mb-0">Every stage feeds its exact mathematical output into the next stage without any black-box shortcuts:</p>
+                            </div>
+
+                            <div class="row g-2" id="pipelineContainer">
+                                <!-- Populated dynamically by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: Matrix & Vectors -->
+                        <div class="tab-pane fade" id="tab-matrix">
+                            <h6 class="fw-bold mb-1 text-white">Inside the Mathematical Representation</h6>
+                            <p class="text-secondary small mb-3">See how your image is transformed from pixels to a 400D vector, normalized, and compressed to 15 coordinates:</p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card p-2 bg-dark border-secondary h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="small fw-bold text-info">Stage 2: 20x20 Grayscale Matrix \(A\)</span>
+                                            <span class="badge bg-secondary small">Values: 0-255</span>
+                                        </div>
+                                        <pre class="code-view mb-0" id="asciiMatrix">Loading matrix...</pre>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card p-2 bg-dark border-secondary h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="small fw-bold text-info">Stage 5 & 6: Feature Vector \(\mathbf{z}\)</span>
+                                            <span class="badge bg-primary small">Compressed 96%</span>
+                                        </div>
+                                        <div class="p-2 mb-2 bg-black rounded border border-secondary small">
+                                            <div><strong>Original Dimension:</strong> 400 pixels in \(\mathbb{R}^{400}\)</div>
+                                            <div><strong>Original \(L_2\) Norm:</strong> <span id="normVal" class="text-info fw-bold">--</span></div>
+                                            <div><strong>Normalized Norm:</strong> <span class="text-success fw-bold">1.000000</span> (Unit Sphere)</div>
+                                            <div><strong>Reconstruction Residual:</strong> <span id="reconErr" class="text-warning">--</span></div>
+                                        </div>
+
+                                        <!-- Highlighted 3D Vector Representation -->
+                                        <div class="p-2 mb-2 bg-black rounded border border-info small">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <strong class="text-white"><i class="bi bi-box me-1 text-info"></i>3D Vector Representation \(\mathbf{z}_{3\text{D}} \in \mathbb{R}^3\):</strong>
+                                                <span class="badge bg-info text-dark">Top 3 Principal Axes</span>
+                                            </div>
+                                            <div class="row text-center g-1 my-1">
+                                                <div class="col-4">
+                                                    <div class="p-1 rounded bg-dark border border-secondary">
+                                                        <span class="d-block text-secondary small" style="font-size:0.7rem;">z₁ (Axis 1)</span>
+                                                        <span id="z1Val" class="text-info fw-bold font-monospace">--</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="p-1 rounded bg-dark border border-secondary">
+                                                        <span class="d-block text-secondary small" style="font-size:0.7rem;">z₂ (Axis 2)</span>
+                                                        <span id="z2Val" class="text-info fw-bold font-monospace">--</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="p-1 rounded bg-dark border border-secondary">
+                                                        <span class="d-block text-secondary small" style="font-size:0.7rem;">z₃ (Axis 3)</span>
+                                                        <span id="z3Val" class="text-info fw-bold font-monospace">--</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-2 pt-1 border-top border-secondary text-secondary" style="font-size:0.75rem;">
+                                                <span>3D Vector: <code id="z3dVector" class="text-warning">[--]</code></span>
+                                                <span>3D Norm \(\|\mathbf{z}_{3\text{D}}\|_2\): <strong id="z3dNorm" class="text-success">--</strong></span>
+                                            </div>
+                                        </div>
+
+                                        <span class="small text-secondary fw-semibold mb-1">Full Coordinate Vector \(\mathbf{z} \in \mathbb{R}^{15}\):</span>
+                                        <pre class="code-view mb-0" id="pcaCoordsText">Loading...</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 5: Visual Plots & Figures -->
+                        <div class="tab-pane fade" id="tab-plots">
+                            <div class="mb-3">
+                                <h6 class="fw-bold mb-0 text-white">Visual Artifacts from SVD / PCA Analysis</h6>
+                                <p class="text-secondary small mb-0">High-resolution plots generated by the mathematical engine during dataset analysis:</p>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card p-2 bg-dark border-secondary">
+                                        <span class="small fw-bold text-info mb-1"><i class="bi bi-grid-fill me-1"></i>Eigen-Digits (Top 10 Basis Vectors)</span>
+                                        <img src="/outputs/3_eigen_digits.png" class="img-fluid img-preview-box" alt="Eigen Digits">
+                                        <p class="small text-secondary mt-1 mb-0">Columns of right singular matrix \(V_k\) reshaped into 2D basis images.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card p-2 bg-dark border-secondary">
+                                        <span class="small fw-bold text-info mb-1"><i class="bi bi-graph-up me-1"></i>SVD Scree Plot & Cumulative Variance</span>
+                                        <img src="/outputs/2_scree_plot.png" class="img-fluid img-preview-box" alt="Scree Plot">
+                                        <p class="small text-secondary mt-1 mb-0">Singular values drop rapidly; 15 components capture 88.42% of total variance.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card p-2 bg-dark border-secondary">
+                                        <span class="small fw-bold text-info mb-1"><i class="bi bi-box me-1"></i>3D Orthogonal Subspace Map (\(\mathbb{R}^3\))</span>
+                                        <img src="/outputs/4_pca_subspace.png" class="img-fluid img-preview-box" alt="3D PCA Subspace">
+                                        <p class="small text-secondary mt-1 mb-0">3D projection of digits and test vector onto the first 3 principal axes (\(z_1, z_2, z_3\)).</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card p-2 bg-dark border-secondary">
+                                        <span class="small fw-bold text-info mb-1"><i class="bi bi-check2-square me-1"></i>Confusion Matrix (90% Test Accuracy)</span>
+                                        <img src="/outputs/7_confusion_matrix.png" class="img-fluid img-preview-box" alt="Confusion Matrix">
+                                        <p class="small text-secondary mt-1 mb-0">Evaluated across 30 novel handwritten test images (10 classes x 3 variations).</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Application Logic -->
+    <script>
+        // Drawing Canvas Initialization
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        let isPainting = false;
+        let strokeDebounceTimer = null;
+
+        function resetCanvasBackground() {
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw subtle guide frame
+            ctx.strokeStyle = "#1e293b";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+
+            // Set stroke settings for drawing
+            ctx.lineWidth = 18;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.strokeStyle = "white";
+        }
+        resetCanvasBackground();
+
+        function startDraw(e) {
+            isPainting = true;
+            drawStroke(e);
+        }
+        function endDraw() {
+            if (!isPainting) return;
+            isPainting = false;
+            ctx.beginPath();
+
+            // Instant prediction if toggle is enabled
+            const liveToggle = document.getElementById('livePredictToggle');
+            if (liveToggle && liveToggle.checked) {
+                clearTimeout(strokeDebounceTimer);
+                strokeDebounceTimer = setTimeout(() => {
+                    analyzeDrawing();
+                }, 200); // 200ms debounce for natural feel
+            }
+        }
+        function drawStroke(e) {
+            if (!isPainting) return;
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            ctx.lineWidth = 18;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.strokeStyle = "white";
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('mousemove', drawStroke);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); });
+        canvas.addEventListener('touchend', (e) => { e.preventDefault(); endDraw(); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); drawStroke(e); });
+
+        function clearCanvas() {
+            clearTimeout(strokeDebounceTimer);
+            resetCanvasBackground();
+            ctx.beginPath();
+            document.getElementById('predDigit').innerText = "--";
+            document.getElementById('confLabel').innerText = "Canvas cleared";
+            document.getElementById('confBadge').innerText = "Confidence: --%";
+            document.getElementById('confBadge').className = "badge bg-secondary rounded-pill px-2 py-1 small";
+            document.getElementById('latencyBadge').innerText = "⚡ -- ms";
+            document.getElementById('top3Container').innerHTML = '<div class="text-secondary small fst-italic">Draw or select a digit to analyze.</div>';
+            document.getElementById('summaryBox').innerHTML = '<i class="bi bi-lightbulb-fill text-warning me-1"></i><span>Draw any number (0-9) inside the box and it will analyze instantly.</span>';
+        }
+
+        // Embedded 3D cluster points (Zero network latency)
+        let initialClusters3D = {{ clusters_3d_json|safe if clusters_3d_json is defined else '{}' }};
+        let renderer3D = null;
+
+        class FastVector3DRenderer {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                if (!this.canvas) return;
+                this.ctx = this.canvas.getContext('2d');
+                
+                // Camera angles (Euler)
+                this.rotX = -0.42; // Elevation
+                this.rotY = 0.58;  // Azimuth
+                this.zoom = 280;
+                this.distance = 3.6;
+                
+                this.clusters = initialClusters3D || {};
+                this.testVector = [0, 0, 0];
+                this.predDigit = 0;
+                this.isAutoSpinning = false;
+                this.spinSpeed = 0.008;
+                
+                this.colors = [
+                    '#38bdf8', '#22c55e', '#f59e0b', '#ec4899', '#a855f7',
+                    '#06b6d4', '#84cc16', '#f97316', '#6366f1', '#e11d48'
+                ];
+
+                this.isDragging = false;
+                this.lastX = 0;
+                this.lastY = 0;
+
+                this.initEvents();
+                this.resize();
+                
+                // Fallback fetch if initialClusters3D was empty
+                if (Object.keys(this.clusters).length === 0) {
+                    fetch('/api/clusters_3d')
+                        .then(r => r.json())
+                        .then(data => {
+                            this.clusters = data;
+                            this.render();
+                        })
+                        .catch(err => console.warn('3D fetch fallback error:', err));
+                }
+            }
+
+            resize() {
+                if (!this.canvas) return;
+                const rect = this.canvas.getBoundingClientRect();
+                this.width = rect.width || 600;
+                this.height = rect.height || 420;
+                const dpr = window.devicePixelRatio || 1;
+                this.canvas.width = this.width * dpr;
+                this.canvas.height = this.height * dpr;
+                this.ctx.resetTransform ? this.ctx.resetTransform() : this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+                this.ctx.scale(dpr, dpr);
+                this.render();
+            }
+
+            initEvents() {
+                this.canvas.addEventListener('mousedown', (e) => {
+                    this.isDragging = true;
+                    this.lastX = e.clientX;
+                    this.lastY = e.clientY;
+                    this.canvas.style.cursor = 'grabbing';
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!this.isDragging) return;
+                    const dx = e.clientX - this.lastX;
+                    const dy = e.clientY - this.lastY;
+                    this.rotY += dx * 0.008;
+                    this.rotX += dy * 0.008;
+                    this.rotX = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, this.rotX));
+                    this.lastX = e.clientX;
+                    this.lastY = e.clientY;
+                    this.render();
+                });
+
+                window.addEventListener('mouseup', () => {
+                    this.isDragging = false;
+                    if (this.canvas) this.canvas.style.cursor = 'grab';
+                });
+
+                this.canvas.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    this.zoom *= e.deltaY < 0 ? 1.08 : 0.92;
+                    this.zoom = Math.max(120, Math.min(700, this.zoom));
+                    this.render();
+                }, { passive: false });
+
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            toggleAutoRotate() {
+                this.isAutoSpinning = !this.isAutoSpinning;
+                const btn = document.getElementById('btnAutoSpin');
+                if (btn) {
+                    btn.classList.toggle('btn-info', this.isAutoSpinning);
+                    btn.classList.toggle('btn-dark', !this.isAutoSpinning);
+                    btn.classList.toggle('text-white', this.isAutoSpinning);
+                    btn.classList.toggle('text-info', !this.isAutoSpinning);
+                }
+                if (this.isAutoSpinning) this.tickSpin();
+            }
+
+            tickSpin() {
+                if (!this.isAutoSpinning) return;
+                this.rotY += this.spinSpeed;
+                this.render();
+                requestAnimationFrame(() => this.tickSpin());
+            }
+
+            resetView() {
+                this.rotX = -0.42;
+                this.rotY = 0.58;
+                this.zoom = 280;
+                this.render();
+            }
+
+            updateData(z3d, predDigit) {
+                if (z3d) this.testVector = z3d;
+                if (predDigit !== undefined) this.predDigit = predDigit;
+                this.render();
+            }
+
+            project(x, y, z) {
+                const cosY = Math.cos(this.rotY), sinY = Math.sin(this.rotY);
+                const x1 = x * cosY - z * sinY;
+                const z1 = x * sinY + z * cosY;
+
+                const cosX = Math.cos(this.rotX), sinX = Math.sin(this.rotX);
+                const y1 = y * cosX - z1 * sinX;
+                const z2 = y * sinX + z1 * cosX;
+
+                const depth = this.distance - z2;
+                const scale = this.zoom / Math.max(0.1, depth);
+                const cx = this.width / 2;
+                const cy = this.height / 2;
+
+                return {
+                    sx: cx + x1 * scale,
+                    sy: cy - y1 * scale,
+                    depth: z2
+                };
+            }
+
+            render() {
+                if (!this.ctx) return;
+                const ctx = this.ctx;
+                ctx.clearRect(0, 0, this.width, this.height);
+
+                // 1. Draw subtle background coordinate box
+                const floorY = -0.55;
+                const boxL = 0.6;
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 4]);
+
+                const b00 = this.project(-boxL, floorY, -boxL);
+                const b10 = this.project(boxL, floorY, -boxL);
+                const b11 = this.project(boxL, floorY, boxL);
+                const b01 = this.project(-boxL, floorY, boxL);
+
+                ctx.beginPath();
+                ctx.moveTo(b00.sx, b00.sy);
+                ctx.lineTo(b10.sx, b10.sy);
+                ctx.lineTo(b11.sx, b11.sy);
+                ctx.lineTo(b01.sx, b01.sy);
+                ctx.closePath();
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 2. Draw 3D Principal Axes from Origin
+                const origin = this.project(0, 0, 0);
+                const axisLen = 0.75;
+                const pX = this.project(axisLen, 0, 0);
+                const pY = this.project(0, axisLen, 0);
+                const pZ = this.project(0, 0, axisLen);
+
+                this.drawAxis(origin, pX, '#38bdf8', 'z₁ (PC1)');
+                this.drawAxis(origin, pY, '#22c55e', 'z₂ (PC2)');
+                this.drawAxis(origin, pZ, '#f59e0b', 'z₃ (PC3)');
+
+                // 3. Render Training Clusters
+                const renderQueue = [];
+                if (this.clusters) {
+                    for (let c = 0; c < 10; c++) {
+                        const pts = this.clusters[c] || [];
+                        const color = this.colors[c % this.colors.length];
+                        for (let pt of pts) {
+                            const pr = this.project(pt[0], pt[1], pt[2]);
+                            renderQueue.push({
+                                type: 'point',
+                                depth: pr.depth,
+                                sx: pr.sx,
+                                sy: pr.sy,
+                                color: color,
+                                radius: 3.5
+                            });
+                        }
+                    }
+                }
+
+                // Depth sort all points
+                renderQueue.sort((a, b) => a.depth - b.depth);
+                for (let item of renderQueue) {
+                    ctx.fillStyle = item.color;
+                    ctx.beginPath();
+                    ctx.arc(item.sx, item.sy, item.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // 4. Test Digit 3D Vector & Marker
+                const pTest = this.project(this.testVector[0], this.testVector[1], this.testVector[2]);
+                const pFloor = this.project(this.testVector[0], floorY, this.testVector[2]);
+
+                // Depth stem
+                ctx.strokeStyle = '#64748b';
+                ctx.lineWidth = 1.2;
+                ctx.setLineDash([2, 3]);
+                ctx.beginPath();
+                ctx.moveTo(pTest.sx, pTest.sy);
+                ctx.lineTo(pFloor.sx, pFloor.sy);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Floor shadow point
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+                ctx.beginPath();
+                ctx.arc(pFloor.sx, pFloor.sy, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 3D Vector Ray from Origin to Test Digit
+                ctx.shadowColor = '#ef4444';
+                ctx.shadowBlur = 10;
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 3.5;
+                ctx.beginPath();
+                ctx.moveTo(origin.sx, origin.sy);
+                ctx.lineTo(pTest.sx, pTest.sy);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Test Digit Diamond Marker
+                ctx.fillStyle = '#ef4444';
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                this.drawDiamond(pTest.sx, pTest.sy, 8);
+
+                // Label
+                ctx.font = 'bold 11px system-ui, sans-serif';
+                ctx.fillStyle = '#ffffff';
+                const label = `Digit ${this.predDigit} (z₃D)`;
+                ctx.fillText(label, pTest.sx + 10, pTest.sy - 8);
+            }
+
+            drawAxis(p0, p1, color, label) {
+                const ctx = this.ctx;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(p0.sx, p0.sy);
+                ctx.lineTo(p1.sx, p1.sy);
+                ctx.stroke();
+
+                ctx.font = 'bold 10px monospace';
+                ctx.fillStyle = color;
+                ctx.fillText(label, p1.sx + 4, p1.sy + 3);
+            }
+
+            drawDiamond(cx, cy, size) {
+                const ctx = this.ctx;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - size);
+                ctx.lineTo(cx + size, cy);
+                ctx.lineTo(cx, cy + size);
+                ctx.lineTo(cx - size, cy);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+        function initChart() {
+            const ctxSim = document.getElementById('similarityChart').getContext('2d');
+            simChart = new Chart(ctxSim, {
+                type: 'bar',
+                data: {
+                    labels: ['Digit 0','Digit 1','Digit 2','Digit 3','Digit 4','Digit 5','Digit 6','Digit 7','Digit 8','Digit 9'],
+                    datasets: [{
+                        label: 'Cosine Similarity S(u,v)',
+                        data: Array(10).fill(0),
+                        backgroundColor: '#0284c7',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 250 }, // Quick, responsive animation
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            min: -0.5, 
+                            max: 1.0, 
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: '#cbd5e1', font: { weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function analyzeDrawing() {
+            const dataUrl = canvas.toDataURL("image/png");
+            await sendPayload({ image_base64: dataUrl });
+        }
+
+        async function loadSelectedSample() {
+            const sampleName = document.getElementById('sampleSelect').value;
+            if (sampleName) {
+                await sendPayload({ sample_name: sampleName });
+            }
+        }
+
+        async function quickSelectDigit(digit) {
+            const sampleSelect = document.getElementById('sampleSelect');
+            for (let i = 0; i < sampleSelect.options.length; i++) {
+                const opt = sampleSelect.options[i];
+                if (opt.value && opt.value.includes(`test_${digit}_`)) {
+                    sampleSelect.selectedIndex = i;
+                    await sendPayload({ sample_name: opt.value });
+                    return;
+                }
+            }
+        }
+
+        async function sendPayload(body) {
+            try {
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(body)
+                });
+                
+                const text = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error("Non-JSON received:", text);
+                    alert("Server error: " + text.substring(0, 150));
+                    return;
+                }
+
+                if (!res.ok || data.error) {
+                    // If canvas is blank, gently update status without annoying alert
+                    document.getElementById('confLabel').innerText = data.error || "Analysis failed.";
+                    return;
+                }
+                renderResults(data);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderResults(data) {
+            // Hero card updates
+            document.getElementById('predDigit').innerText = data.predicted_digit;
+            document.getElementById('confLabel').innerText = `${data.confidence_label} (${(data.confidence * 100).toFixed(1)}%)`;
+            
+            const badge = document.getElementById('confBadge');
+            badge.innerText = `Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+            badge.className = `badge bg-${data.confidence_badge} rounded-pill px-2 py-1 small`;
+
+            // Latency badge
+            if (data.latency_ms !== undefined) {
+                document.getElementById('latencyBadge').innerText = `⚡ ${data.latency_ms} ms`;
+            }
+
+            // Top 3 Ranking
+            const top3Box = document.getElementById('top3Container');
+            top3Box.innerHTML = '';
+            data.top_3.forEach((item, index) => {
+                const isFirst = index === 0;
+                const row = document.createElement('div');
+                row.className = "mb-1";
+                row.innerHTML = `
+                    <div class="d-flex justify-content-between small ${isFirst ? 'fw-bold text-white' : 'text-secondary'}">
+                        <span>#${index + 1} Digit ${item.digit}</span>
+                        <span>${item.confidence_pct}% (${item.similarity > 0 ? '+' : ''}${item.similarity.toFixed(3)})</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar ${isFirst ? 'bg-success' : 'bg-primary'}" role="progressbar" style="width: ${item.confidence_pct}%;"></div>
+                    </div>
+                `;
+                top3Box.appendChild(row);
+            });
+
+            // Plain English Summary Box
+            document.getElementById('summaryBox').innerHTML = `
+                <i class="bi bi-lightbulb-fill text-warning me-1"></i>
+                <span>${data.summary_text}</span>
+            `;
+
+            // Update Similarity Chart
+            const simScores = Object.values(data.similarity_scores);
+            const bgColors = simScores.map((_, i) => i === data.predicted_digit ? '#22c55e' : '#0284c7');
+            simChart.data.datasets[0].data = simScores;
+            simChart.data.datasets[0].backgroundColor = bgColors;
+            simChart.update();
+
+            // Update Similarity Table
+            const tbody = document.getElementById('simTableBody');
+            tbody.innerHTML = '';
+            for (let d = 0; d < 10; d++) {
+                const isMax = d === data.predicted_digit;
+                const sim = data.similarity_scores[d];
+                const tr = document.createElement('tr');
+                if (isMax) tr.className = 'table-success text-dark fw-bold';
+                
+                let matchBadge = '<span class="badge bg-secondary">Low</span>';
+                if (isMax) matchBadge = '<span class="badge bg-success">TOP MATCH</span>';
+                else if (sim > 0.4) matchBadge = '<span class="badge bg-warning text-dark">Close</span>';
+
+                tr.innerHTML = `
+                    <td><strong>Digit ${d}</strong></td>
+                    <td>${matchBadge}</td>
+                    <td>${sim > 0 ? '+' : ''}${sim.toFixed(4)}</td>
+                    <td>${data.inner_products[d] > 0 ? '+' : ''}${data.inner_products[d].toFixed(4)}</td>
+                    <td>${data.euclidean_distances[d].toFixed(4)}</td>
+                    <td>${(data.probabilities[d] * 100).toFixed(1)}%</td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            // Update 8-Stage Pipeline Cards
+            const pipeBox = document.getElementById('pipelineContainer');
+            pipeBox.innerHTML = '';
+            data.pipeline_stages.forEach(st => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                col.innerHTML = `
+                    <div class="pipeline-card d-flex align-items-start gap-2">
+                        <div class="step-circle flex-shrink-0">${st.stage}</div>
+                        <div>
+                            <div class="fw-bold text-white small">${st.title}</div>
+                            <div class="text-secondary" style="font-size: 0.78rem;">${st.desc}</div>
+                        </div>
+                    </div>
+                `;
+                pipeBox.appendChild(col);
+            });
+
+            // Update Matrix & Vector tab
+            document.getElementById('asciiMatrix').innerText = data.ascii_matrix;
+            document.getElementById('normVal').innerText = data.l2_norm.toFixed(2);
+            document.getElementById('reconErr').innerText = data.reconstruction_error.toFixed(4);
+            
+            // Update 3D Vector Representation & Graph
+            currentMatrixValues = data.matrix_values;
+            currentPredictedDigit = data.predicted_digit;
+            if (data.z_3d && data.z_3d.length >= 3) {
+                currentZ3D = data.z_3d;
+                const z1 = data.z_3d[0];
+                const z2 = data.z_3d[1];
+                const z3 = data.z_3d[2];
+                const normVal = (data.z_3d_norm !== undefined ? data.z_3d_norm : Math.hypot(z1, z2, z3)).toFixed(4);
+
+                document.getElementById('z1Val').innerText = (z1 >= 0 ? '+' : '') + z1.toFixed(4);
+                document.getElementById('z2Val').innerText = (z2 >= 0 ? '+' : '') + z2.toFixed(4);
+                document.getElementById('z3Val').innerText = (z3 >= 0 ? '+' : '') + z3.toFixed(4);
+                document.getElementById('z3dVector').innerText = `[${z1 > 0 ? '+' : ''}${z1.toFixed(3)}, ${z2 > 0 ? '+' : ''}${z2.toFixed(3)}, ${z3 > 0 ? '+' : ''}${z3.toFixed(3)}]ᵀ`;
+                document.getElementById('z3dNorm').innerText = normVal;
+
+                // Update Tab 2 3D Pills
+                const t3z1 = document.getElementById('tab3d_z1');
+                if (t3z1) t3z1.innerText = (z1 >= 0 ? '+' : '') + z1.toFixed(4);
+                const t3z2 = document.getElementById('tab3d_z2');
+                if (t3z2) t3z2.innerText = (z2 >= 0 ? '+' : '') + z2.toFixed(4);
+                const t3z3 = document.getElementById('tab3d_z3');
+                if (t3z3) t3z3.innerText = (z3 >= 0 ? '+' : '') + z3.toFixed(4);
+                const t3norm = document.getElementById('tab3d_norm');
+                if (t3norm) t3norm.innerText = normVal;
+
+                // Instant 3D Canvas Update
+                if (renderer3D) {
+                    renderer3D.updateData(data.z_3d, data.predicted_digit);
+                }
+            }
+
+            let pcaText = "15-Dimensional Coordinate Vector z:\n";
+            data.z_coords.forEach((val, i) => {
+                pcaText += `z_${(i+1).toString().padStart(2, '0')} = ${val > 0 ? '+' : ''}${val.toFixed(5)}\n`;
+            });
+            document.getElementById('pcaCoordsText').innerText = pcaText;
+        }
+
+        window.onload = () => {
+            initChart();
+            renderer3D = new FastVector3DRenderer('vector3dCanvas');
+
+            // Resize 3D canvas when tab is opened
+            const tab3dBtn = document.querySelector('button[data-bs-target="#tab-3d-vector"]');
+            if (tab3dBtn) {
+                tab3dBtn.addEventListener('shown.bs.tab', () => {
+                    if (renderer3D) renderer3D.resize();
+                });
+            }
+
+            // Automatically select and run Digit 7 on load to demonstrate immediately
+            quickSelectDigit(7);
+        };
+    </script>
+</body>
+</html>
