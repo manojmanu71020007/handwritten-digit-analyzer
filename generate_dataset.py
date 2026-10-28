@@ -3,7 +3,7 @@ generate_dataset.py
 Generates a diverse, high-quality handwritten digit dataset (0-9)
 combining real handwriting fonts (Ink Free, Segoe Print, Comic Sans, Calibri, etc.),
 custom procedural vector strokes (authentic non-standard handwriting variations including
-loopy cursive 2, flat-top 3, open 4, narrow oval 0, large-top 8, and arched 6),
+loopy cursive 2, swan-neck 2, double-loop 2, flat-top 3, open 4, narrow oval 0, large-top 8, and arched 6),
 plus authentic user-drawn canvas digit exemplars with subtle rotations.
 Saves images into dataset/train/ and dataset/test/.
 """
@@ -108,22 +108,42 @@ def create_procedural_digit(digit: int, style=0, angle=0.0):
             draw.line([(cx - 15, cy + 30), (cx + 15, cy + 30)], fill=255, width=sw)
 
     elif digit == 2:
-        if style % 3 == 0:
-            # Loopy cursive 2 (user style with bottom loop & tail)
+        if style % 6 == 0:
+            # Loopy cursive 2 (bottom loop & tail)
             pts = [(cx - 18, cy - 18), (cx - 5, cy - 32), (cx + 18, cy - 28), (cx + 22, cy - 12), 
                    (cx - 8, cy + 20), (cx - 24, cy + 28), (cx - 14, cy + 34), (cx + 24, cy + 30)]
             for k in range(len(pts) - 1):
                 draw.line([pts[k], pts[k + 1]], fill=255, width=sw)
-        elif style % 3 == 1:
+        elif style % 6 == 1:
             # Sharp standard 2 (arch, diagonal, straight flat base)
             pts = [(cx - 18, cy - 18), (cx - 5, cy - 32), (cx + 18, cy - 28), (cx + 22, cy - 12), 
                    (cx - 18, cy + 30), (cx + 24, cy + 30)]
             for k in range(len(pts) - 1):
                 draw.line([pts[k], pts[k + 1]], fill=255, width=sw)
-        else:
+        elif style % 6 == 2:
+            # Swan-neck 2 (top arc, vertical drop on right, bottom loop, wide base tail - user desktop style)
+            pts = [(cx - 15, cy - 20), (cx - 2, cy - 34), (cx + 18, cy - 30), (cx + 24, cy - 14), 
+                   (cx + 20, cy + 4), (cx + 14, cy + 18), (cx - 8, cy + 24), (cx - 24, cy + 28), 
+                   (cx - 12, cy + 34), (cx + 26, cy + 30)]
+            for k in range(len(pts) - 1):
+                draw.line([pts[k], pts[k + 1]], fill=255, width=sw)
+        elif style % 6 == 3:
+            # Double-loop cursive 2 (upper loop, diagonal, lower loop, base tail - user mobile style)
+            pts = [(cx - 5, cy - 18), (cx - 18, cy - 28), (cx - 6, cy - 34), (cx + 18, cy - 30), 
+                   (cx + 20, cy - 14), (cx, cy + 8), (cx - 14, cy + 22), (cx - 22, cy + 28), 
+                   (cx - 10, cy + 34), (cx + 24, cy + 30)]
+            for k in range(len(pts) - 1):
+                draw.line([pts[k], pts[k + 1]], fill=255, width=sw)
+        elif style % 6 == 4:
             # Curved base swan 2
             pts = [(cx - 16, cy - 20), (cx - 2, cy - 30), (cx + 16, cy - 24), (cx + 18, cy - 10), 
                    (cx - 12, cy + 24), (cx + 20, cy + 30)]
+            for k in range(len(pts) - 1):
+                draw.line([pts[k], pts[k + 1]], fill=255, width=sw)
+        else:
+            # Flowing rounded 2
+            pts = [(cx - 14, cy - 22), (cx, cy - 32), (cx + 18, cy - 26), (cx + 18, cy - 12), 
+                   (cx - 14, cy + 26), (cx + 22, cy + 28)]
             for k in range(len(pts) - 1):
                 draw.line([pts[k], pts[k + 1]], fill=255, width=sw)
 
@@ -262,6 +282,23 @@ def generate_all():
                 img = Image.fromarray(mat.astype(np.uint8))
                 img.save(os.path.join(train_dir, f"digit_{digit}_sample_{sample_idx}.png"))
                 sample_idx += 1
+
+        # Also register additional authentic cursive variations for digit 2 (swan & double-loop)
+        if digit == 2:
+            for extra_p in ["scratch/true_user_stroke_0.png", "scratch/true_user_stroke_1.png"]:
+                if os.path.exists(extra_p):
+                    e_img = Image.open(extra_p).convert("L")
+                    w, h = e_img.size
+                    scale = min(150.0 / w, 150.0 / h)
+                    nw, nh = int(round(w * scale)), int(round(h * scale))
+                    e_sc = e_img.resize((nw, nh), Image.Resampling.BILINEAR)
+                    for rot_angle in [-6.0, -3.0, 0.0, 3.0, 6.0]:
+                        rot_img = e_sc.rotate(rot_angle, resample=Image.Resampling.BILINEAR)
+                        u_arr = np.array(rot_img, dtype=np.float64)
+                        mat = standardize_matrix(u_arr)
+                        img = Image.fromarray(mat.astype(np.uint8))
+                        img.save(os.path.join(train_dir, f"digit_{digit}_sample_{sample_idx}.png"))
+                        sample_idx += 1
 
         print(f"  Digit {digit}: Generated {sample_idx} comprehensive training exemplars.")
 

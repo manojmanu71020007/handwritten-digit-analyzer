@@ -127,7 +127,7 @@ class SimilarityClassifier:
                 nn_sim = float(sample_sims[best_idx])
                 
                 proto_sims_400 = np.dot(self.raw_prototypes, x_test)
-                effective_sims = 0.25 * proto_sims_400 + 0.75 * exemplar_max_sims
+                effective_sims = 0.90 * exemplar_max_sims + 0.10 * proto_sims_400
             else:
                 nn_label = self.classes[0]
                 nn_sim = 0.0
