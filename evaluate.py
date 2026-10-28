@@ -30,7 +30,7 @@ def run_evaluation(k=15):
     # 2. Fit PCA/SVD
     pca = PCASVDAnalyzer(n_components=k).fit(X_train)
     Z_train = pca.project(X_train)
-    clf = SimilarityClassifier().fit_patterns(Z_train, y_train)
+    clf = SimilarityClassifier().fit_patterns(Z_train, y_train, X_train=X_train)
 
     # 3. Evaluate on test set
     test_files = sorted([f for f in os.listdir("dataset/test") if f.endswith(".png")])
@@ -46,7 +46,7 @@ def run_evaluation(k=15):
         vec = prep.vectorize(mat)
         vec_n, _ = prep.normalize_l2(vec)
         z = pca.project(vec_n)
-        res = clf.compare_unknown(z)
+        res = clf.compare_unknown(z, x_test=vec_n)
         c_pred = res["predicted_digit"]
         sim = res["similarity_scores"][c_pred]
         

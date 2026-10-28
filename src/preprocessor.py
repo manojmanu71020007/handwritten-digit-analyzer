@@ -40,14 +40,14 @@ class DigitPreprocessor:
     def preprocess_drawn_image(self, pil_img) -> np.ndarray:
         """
         Special high-speed preprocessor for freehand drawn digits:
-        1. Uses PIL C-level getbbox() to instantly find stroke bounds
-        2. Fits and centers digit within a 15x15 box
-        3. Aligns Center of Mass (Centroid) to (10, 10) on a 20x20 canvas (MNIST standard)
+        1. Uses PIL C-level getbbox() with threshold > 50 to isolate true strokes
+        2. Fits and centers digit bounding box symmetrically within a 15x15 box on a 20x20 canvas
+        3. Preserves aspect ratio and prevents any edge clipping
         """
         img = pil_img.convert("L")
         
-        # Fast C-level bounding box search on thresholded mask
-        mask = img.point(lambda p: 255 if p > 25 else 0)
+        # Fast C-level bounding box search on thresholded mask (> 50 eliminates faint UI artifacts)
+        mask = img.point(lambda p: 255 if p > 50 else 0)
         bbox = mask.getbbox()
         if bbox is None:
             # Blank canvas
@@ -66,31 +66,12 @@ class DigitPreprocessor:
         crop_resized = crop.resize((new_w, new_h), Image.Resampling.BILINEAR)
         arr = np.array(crop_resized, dtype=np.float64)
 
-        total_mass = np.sum(arr)
-        if total_mass < 1e-5:
-            return np.zeros(self.target_size, dtype=np.float64)
-
-        y_coords, x_coords = np.indices(arr.shape)
-        cy = np.sum(y_coords * arr) / total_mass
-        cx = np.sum(x_coords * arr) / total_mass
-
-        paste_x = int(round(10.0 - cx))
-        paste_y = int(round(10.0 - cy))
+        # Symmetrical bounding box center placement on canvas (MNIST geometric alignment)
+        paste_x = (self.width - new_w) // 2
+        paste_y = (self.height - new_h) // 2
 
         canvas = np.zeros(self.target_size, dtype=np.float64)
-        src_x1 = max(0, -paste_x)
-        src_y1 = max(0, -paste_y)
-        src_x2 = min(new_w, self.width - paste_x)
-        src_y2 = min(new_h, self.height - paste_y)
-
-        dst_x1 = max(0, paste_x)
-        dst_y1 = max(0, paste_y)
-        dst_x2 = dst_x1 + (src_x2 - src_x1)
-        dst_y2 = dst_y1 + (src_y2 - src_y1)
-
-        if dst_x2 > dst_x1 and dst_y2 > dst_y1:
-            canvas[dst_y1:dst_y2, dst_x1:dst_x2] = arr[src_y1:src_y2, src_x1:src_x2]
-
+        canvas[paste_y:paste_y + new_h, paste_x:paste_x + new_w] = arr
         return canvas
 
     def vectorize(self, matrix: np.ndarray) -> np.ndarray:

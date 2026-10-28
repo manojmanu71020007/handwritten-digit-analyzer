@@ -585,11 +585,6 @@
         function resetCanvasBackground() {
             ctx.fillStyle = "black";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw subtle guide frame
-            ctx.strokeStyle = "#1e293b";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
 
             // Set stroke settings for drawing
             ctx.lineWidth = 18;

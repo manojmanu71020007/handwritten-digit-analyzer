@@ -74,7 +74,7 @@ def init_engine():
     # 2. Fit PCA/SVD
     pca.fit(X_train)
     Z_train = pca.project(X_train)
-    classifier.fit_patterns(Z_train, y_train)
+    classifier.fit_patterns(Z_train, y_train, X_train=X_train)
 
     # Cache 3D cluster points for frontend interactive 3D graph
     clusters_3d_data = {
@@ -96,7 +96,7 @@ def init_engine():
             vec = preprocessor.vectorize(mat)
             norm_vec, l2_norm = preprocessor.normalize_l2(vec)
             z = pca.project(norm_vec)
-            res = classifier.compare_unknown(z)
+            res = classifier.compare_unknown(z, x_test=norm_vec)
             recon_err = pca.reconstruction_error(norm_vec, z=z)
             ascii_art = preprocessor.format_ascii_matrix(mat)
 
@@ -173,7 +173,7 @@ def analyze():
             norm_vec, l2_norm = preprocessor.normalize_l2(vec)
             z = pca.project(norm_vec)
             recon_err = pca.reconstruction_error(norm_vec, z=z)
-            res = classifier.compare_unknown(z)
+            res = classifier.compare_unknown(z, x_test=norm_vec)
             ascii_art = preprocessor.format_ascii_matrix(mat)
             input_source = "Hand-Drawn Canvas"
         else:
